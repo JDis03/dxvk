@@ -2665,6 +2665,26 @@ namespace dxvk {
         m_state.om.attachmentMask.getStencilAccess());
     }
 
+    // On tiling GPUs (TBDR), if an attachment was resolved during this render pass,
+    // the tile memory has already transferred the resolved data to the destination image.
+    // Storing the multisampled source data to main memory causes severe bandwidth waste.
+    if (m_device->perfHints().preferRenderPassOps) {
+      for (uint32_t i = 0; i < renderingInfo.rendering.colorAttachmentCount; i++) {
+        if (renderingInfo.color[i].resolveImageView && renderingInfo.color[i].resolveMode)
+          renderingInfo.color[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      }
+
+      if (renderingInfo.rendering.pDepthAttachment) {
+        if (renderingInfo.depth.resolveImageView && renderingInfo.depth.resolveMode)
+          renderingInfo.depth.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      }
+
+      if (renderingInfo.rendering.pStencilAttachment) {
+        if (renderingInfo.stencil.resolveImageView && renderingInfo.stencil.resolveMode)
+          renderingInfo.stencil.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      }
+    }
+
     // If we can prove that the app has only rendered to a portion of
     // the image, adjust the render area to the exact rendered region.
     if (!hasClearOrResolve && m_state.om.renderAreaLo.x < m_state.om.renderAreaHi.x
