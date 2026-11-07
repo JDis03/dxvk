@@ -1754,6 +1754,7 @@ namespace dxvk {
       { "d3d11.cachedDynamicResources",   "a" },
       { "d3d11.constantBufferRangeCheck", "False" },
       { "d3d11.zeroInitWorkgroupMemory",  "False" },
+      { "d3d11.disableMsaa",              "True" },
       { "dxgi.syncInterval",              "0" },
       { "dxgi.maxFrameLatency",           "2" },
       { "dxgi.maxDeviceMemory",           "2048" },
