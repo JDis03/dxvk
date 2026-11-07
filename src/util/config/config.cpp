@@ -1755,6 +1755,7 @@ namespace dxvk {
       { "dxgi.maxDeviceMemory",           "2048" },
       { "dxgi.maxSharedMemory",           "2048" },
       { "dxvk.numCompilerThreads",        "2" },
+      { "dxvk.enableAsync",               "true" },
       { "dxvk.tilerMode",                 "True" },
       { "d3d9.cachedWriteOnlyBuffers",     "True" },
       { "d3d9.allowDirectBufferMapping",  "False" },

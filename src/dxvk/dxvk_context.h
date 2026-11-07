@@ -1890,6 +1890,8 @@ namespace dxvk {
     Rc<DxvkSampler> createBlitSampler(
             VkFilter                  filter);
 
+    [[nodiscard]] bool checkAsyncCompilationCompat() const;
+
     DxvkGraphicsPipeline* lookupGraphicsPipeline(
       const DxvkGraphicsPipelineShaders&  shaders);
 

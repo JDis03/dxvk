@@ -564,10 +564,12 @@ namespace dxvk {
      * Retrieves a pipeline handle for the given pipeline
      * state. If necessary, a new pipeline will be created.
      * \param [in] state Pipeline state vector
+     * \param [in] async Whether to compile asynchronously if missing
      * \returns Pipeline handle and handle type
      */
     DxvkGraphicsPipelineHandle getPipelineHandle(
-      const DxvkGraphicsPipelineStateInfo&    state);
+      const DxvkGraphicsPipelineStateInfo&    state,
+            bool                              async = false);
     
     /**
      * \brief Compiles a pipeline
@@ -631,6 +633,10 @@ namespace dxvk {
 
     alignas(CACHE_LINE_SIZE)
     dxvk::mutex                                   m_mutex;
+    alignas(CACHE_LINE_SIZE)
+    dxvk::mutex                                   m_asyncMutex;
+
+    std::atomic<bool>                             m_async = { false };
     DxvkPipelineVariantTable<
       DxvkGraphicsPipelineStateInfo,
       DxvkGraphicsPipelineInstance>               m_pipelines;

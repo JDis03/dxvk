@@ -6855,7 +6855,8 @@ namespace dxvk {
                 DxvkContextFlag::GpIndependentSets);
 
     // Retrieve and bind actual Vulkan pipeline handle
-    auto pipelineInfo = m_state.gp.pipeline->getPipelineHandle(m_state.gp.state);
+    auto pipelineInfo = m_state.gp.pipeline->getPipelineHandle(m_state.gp.state,
+      this->checkAsyncCompilationCompat());
 
     if (unlikely(!pipelineInfo.handle))
       return false;
@@ -7701,6 +7702,19 @@ namespace dxvk {
   }
 
 
+  bool DxvkContext::checkAsyncCompilationCompat() const {
+    if (m_state.om.framebufferInfo.numAttachments() == 0)
+      return false;
+
+    for (uint32_t i = 0; i < m_state.om.framebufferInfo.numAttachments(); i++) {
+      const auto& view = m_state.om.framebufferInfo.getAttachment(i).view;
+      if (!view || !view->getRtBindingAsyncCompilationCompat())
+        return false;
+    }
+    return true;
+  }
+
+
   bool DxvkContext::flushDeferredClear(
     const DxvkImage&              image,
     const VkImageSubresourceRange& subresources) {
@@ -8311,6 +8325,12 @@ namespace dxvk {
     if (m_flags.any(DxvkContextFlag::GpDirtyRenderTargets,
                     DxvkContextFlag::GpRenderPassNeedsFlush))
       this->updateRenderTargets();
+
+    for (uint32_t i = 0; i < m_state.om.framebufferInfo.numAttachments(); i++) {
+      const auto& view = m_state.om.framebufferInfo.getAttachment(i).view;
+      if (view)
+        view->setRtBindingFrameId(m_device->getCurrentFrameId());
+    }
 
     if (m_flags.test(DxvkContextFlag::GpXfbActive)) {
       // If transform feedback is active and there is a chance that we might

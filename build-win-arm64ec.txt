@@ -1,0 +1,21 @@
+[binaries]
+c = '/home/dark/valve-sysroot/bin/arm64x-clang'
+cpp = '/home/dark/valve-sysroot/bin/arm64x-clang++'
+ar = '/home/dark/valve-sysroot/bin/arm64x-ar'
+strip = '/home/dark/valve-sysroot/bin/arm64x-strip'
+windres = '/home/dark/valve-sysroot/bin/arm64x-windres'
+
+[built-in options]
+c_args = ['-marm64x']
+cpp_args = ['-marm64x']
+c_link_args = ['-marm64x']
+cpp_link_args = ['-marm64x']
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'windows'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
