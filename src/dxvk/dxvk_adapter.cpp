@@ -104,12 +104,26 @@ namespace dxvk {
     bool hasMemoryBudget = m_capabilities.getFeatures().extMemoryBudget;
 
     auto vk = m_instance->vki();
+    auto now = std::chrono::high_resolution_clock::now();
 
-    VkPhysicalDeviceMemoryBudgetPropertiesEXT memBudget = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT };
     VkPhysicalDeviceMemoryProperties2 memProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2 };
-    memProps.pNext = hasMemoryBudget ? &memBudget : nullptr;
+    VkPhysicalDeviceMemoryBudgetPropertiesEXT memBudget = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT };
 
-    vk->vkGetPhysicalDeviceMemoryProperties2(m_handle, &memProps);
+    {
+      std::lock_guard lock(m_memoryCache.mutex);
+      if (!m_memoryCache.valid || now - m_memoryCache.lastUpdate >= std::chrono::milliseconds(250)) {
+        m_memoryCache.memBudget = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT };
+        m_memoryCache.memProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2 };
+        m_memoryCache.memProps.pNext = hasMemoryBudget ? &m_memoryCache.memBudget : nullptr;
+
+        vk->vkGetPhysicalDeviceMemoryProperties2(m_handle, &m_memoryCache.memProps);
+        m_memoryCache.lastUpdate = now;
+        m_memoryCache.valid = true;
+      }
+
+      memProps = m_memoryCache.memProps;
+      memBudget = m_memoryCache.memBudget;
+    }
     
     DxvkAdapterMemoryInfo info = { };
     info.heapCount = memProps.memoryProperties.memoryHeapCount;

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <functional>
+#include <mutex>
 #include <optional>
 
 #include "dxvk_device_info.h"
@@ -343,6 +345,15 @@ namespace dxvk {
     bool                m_linkedToDGPU = false;
 
     std::array<DxvkAdapterMemoryStats, VK_MAX_MEMORY_HEAPS> m_memoryStats = { };
+
+    struct MemoryHeapCache {
+      dxvk::mutex mutex;
+      std::chrono::high_resolution_clock::time_point lastUpdate = { };
+      VkPhysicalDeviceMemoryProperties2 memProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2 };
+      VkPhysicalDeviceMemoryBudgetPropertiesEXT memBudget = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT };
+      bool valid = false;
+    };
+    mutable MemoryHeapCache m_memoryCache;
 
     Rc<DxvkDevice> createDevice(bool safeMode);
 
