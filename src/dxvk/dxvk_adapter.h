@@ -22,9 +22,11 @@ namespace dxvk {
    * Based on PCIe IDs.
    */
   enum class DxvkGpuVendor : uint16_t {
-    Amd    = 0x1002,
-    Nvidia = 0x10de,
-    Intel  = 0x8086,
+    Amd      = 0x1002,
+    Nvidia   = 0x10de,
+    Intel    = 0x8086,
+    Arm      = 0x13b5,
+    Qualcomm = 0x5143,
   };
 
   /**
@@ -287,6 +289,18 @@ namespace dxvk {
      * \returns \c true if the system has unified memory.
      */
     bool isUnifiedMemoryArchitecture() const;
+
+    /**
+     * \brief Checks whether the adapter is an ARM Mali GPU
+     * \returns \c true if the adapter runs on an ARM Mali driver or hardware
+     */
+    bool isArmMali() const;
+
+    /**
+     * \brief Checks whether the adapter uses tile-based deferred rendering (TBDR)
+     * \returns \c true if the adapter is a known tiler architecture
+     */
+    bool isTiler() const;
 
     /**
      * \brief Registers a relationship with another GPU

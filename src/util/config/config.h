@@ -95,6 +95,12 @@ namespace dxvk {
     static Config getAppConfig(const std::string& appName);
 
     /**
+     * \brief Retrieves default options for ARM Mali and TBDR mobile GPUs
+     * \returns Optimized default configuration for mobile architectures
+     */
+    static Config getArmMaliConfig();
+
+    /**
      * \brief Retrieves user configuration
      * 
      * Reads options from the configuration file,
@@ -102,6 +108,14 @@ namespace dxvk {
      * \returns User-defined configuration options
      */
     static Config getUserConfig();
+
+    /**
+     * \brief Returns map of configured options
+     * \returns Option map
+     */
+    const OptionMap& getOptions() const {
+      return m_options;
+    }
 
     static std::string toLower(std::string str);
 

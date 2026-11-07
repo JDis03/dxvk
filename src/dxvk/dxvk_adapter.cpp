@@ -382,4 +382,29 @@ namespace dxvk {
     return result;
   }
 
+
+  bool DxvkAdapter::isArmMali() const {
+    const auto& properties = m_capabilities.getProperties();
+    return properties.vk12.driverID == VK_DRIVER_ID_ARM_PROPRIETARY
+        || properties.vk12.driverID == VK_DRIVER_ID_MESA_PANVK
+        || properties.core.properties.vendorID == uint32_t(DxvkGpuVendor::Arm)
+        || std::strstr(properties.core.properties.deviceName, "Mali") != nullptr;
+  }
+
+
+  bool DxvkAdapter::isTiler() const {
+    return matchesDriver(VK_DRIVER_ID_MESA_TURNIP)
+        || matchesDriver(VK_DRIVER_ID_QUALCOMM_PROPRIETARY)
+        || matchesDriver(VK_DRIVER_ID_MESA_HONEYKRISP)
+        || matchesDriver(VK_DRIVER_ID_MOLTENVK)
+        || matchesDriver(VK_DRIVER_ID_MESA_PANVK)
+        || matchesDriver(VK_DRIVER_ID_ARM_PROPRIETARY)
+        || matchesDriver(VK_DRIVER_ID_MESA_V3DV)
+        || matchesDriver(VK_DRIVER_ID_BROADCOM_PROPRIETARY)
+        || matchesDriver(VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA)
+        || matchesDriver(VK_DRIVER_ID_IMAGINATION_PROPRIETARY)
+        || matchesDriver(VK_DRIVER_ID_MESA_KOSMICKRISP)
+        || isArmMali();
+  }
+
 }

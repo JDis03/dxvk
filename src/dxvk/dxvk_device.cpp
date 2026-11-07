@@ -722,17 +722,7 @@ namespace dxvk {
 
     // On tilers we need to respect render passes some more. Most of
     // these drivers probably can't run DXVK anyway, but might as well
-    bool tilerMode = m_adapter->matchesDriver(VK_DRIVER_ID_MESA_TURNIP)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_QUALCOMM_PROPRIETARY)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_MESA_HONEYKRISP)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_MOLTENVK)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_MESA_PANVK)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_ARM_PROPRIETARY)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_MESA_V3DV)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_BROADCOM_PROPRIETARY)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_IMAGINATION_PROPRIETARY)
-                  || m_adapter->matchesDriver(VK_DRIVER_ID_MESA_KOSMICKRISP);
+    bool tilerMode = m_adapter->isTiler();
 
     applyTristate(tilerMode, m_options.tilerMode);
     hints.preferRenderPassOps = tilerMode;

@@ -1745,6 +1745,25 @@ namespace dxvk {
   }
 
 
+  Config Config::getArmMaliConfig() {
+    return Config({
+      { "d3d11.relaxedBarriers",          "True" },
+      { "d3d11.relaxedGraphicsBarriers",  "True" },
+      { "d3d11.samplerAnisotropy",        "0" },
+      { "d3d11.maxTessFactor",            "8" },
+      { "d3d11.cachedDynamicResources",   "a" },
+      { "dxgi.maxDeviceMemory",           "2048" },
+      { "dxgi.maxSharedMemory",           "2048" },
+      { "dxvk.numCompilerThreads",        "2" },
+      { "dxvk.tilerMode",                 "True" },
+      { "d3d9.cachedWriteOnlyBuffers",     "True" },
+      { "d3d9.allowDirectBufferMapping",  "False" },
+      { "d3d9.samplerAnisotropy",         "0" },
+      { "d3d9.maxAvailableMemory",        "2048" },
+    });
+  }
+
+
   Config Config::getUserConfig() {
     Config config;
 

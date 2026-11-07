@@ -417,23 +417,34 @@ namespace dxvk {
     if (options->customVendorId < 0) {
       uint16_t fallbackVendor = 0xdead;
       uint16_t fallbackDevice = 0xbeef;
+      const char* fallbackDesc = "Generic Graphics Card";
 
       if (!options->hideAmdGpu) {
         // AMD RX 6700 XT
         fallbackVendor = uint16_t(DxvkGpuVendor::Amd);
         fallbackDevice = 0x73df;
+        fallbackDesc   = "AMD Radeon RX 6700 XT";
       } else if (!options->hideNvidiaGpu) {
         // Nvidia RTX 3060
         fallbackVendor = uint16_t(DxvkGpuVendor::Nvidia);
         fallbackDevice = 0x2487;
+        fallbackDesc   = "NVIDIA GeForce RTX 3060";
       }
 
       bool hideNvidiaGpu = adapterInfo.driverId == VK_DRIVER_ID_NVIDIA_PROPRIETARY
         ? options->hideNvidiaGpu : options->hideNvkGpu;
 
+      bool isNonclassicalVendorId = adapterInfo.vendorId != uint16_t(DxvkGpuVendor::Nvidia) &&
+                                    adapterInfo.vendorId != uint16_t(DxvkGpuVendor::Amd) &&
+                                    adapterInfo.vendorId != uint16_t(DxvkGpuVendor::Intel);
+
+      if (isNonclassicalVendorId)
+        Logger::info(str::format("DXGI: Detected nonclassical vendor ID: 0x", std::hex, adapterInfo.vendorId));
+
       bool hideGpu = (adapterInfo.vendorId == uint16_t(DxvkGpuVendor::Nvidia) && hideNvidiaGpu)
                   || (adapterInfo.vendorId == uint16_t(DxvkGpuVendor::Amd) && options->hideAmdGpu)
-                  || (adapterInfo.vendorId == uint16_t(DxvkGpuVendor::Intel) && options->hideIntelGpu);
+                  || (adapterInfo.vendorId == uint16_t(DxvkGpuVendor::Intel) && options->hideIntelGpu)
+                  || isNonclassicalVendorId;
 
       if (hideGpu) {
         adapterInfo.vendorId = fallbackVendor;
@@ -441,7 +452,11 @@ namespace dxvk {
         if (options->customDeviceId < 0)
           adapterInfo.deviceId = fallbackDevice;
 
+        if (options->customDeviceDesc.empty())
+          description = fallbackDesc;
+
         Logger::info(str::format("DXGI: Hiding actual GPU, reporting:\n",
+                                 "  device name: ", description, "\n",
                                  "  vendor ID: 0x", std::hex, adapterInfo.vendorId, "\n",
                                  "  device ID: 0x", std::hex, adapterInfo.deviceId, "\n"));
       }

@@ -354,6 +354,21 @@ namespace dxvk {
       return false;
     }
 
+    bool enableMaliProfile = env::getEnvVar("DXVK_MALI_PROFILE") == "1"
+                          || m_adapters[0]->isArmMali();
+
+    if (enableMaliProfile) {
+      Logger::info("ARM Mali / TBDR mobile architecture detected: applying optimized profile");
+      Config maliConfig = Config::getArmMaliConfig();
+      m_config.merge(maliConfig);
+      m_options = DxvkOptions(m_config);
+
+      for (const auto& pair : maliConfig.getOptions()) {
+        std::string effectiveVal = m_config.getOption<std::string>(pair.first.c_str(), "");
+        Logger::info(str::format("  ", pair.first, " = ", effectiveVal));
+      }
+    }
+
     for (const auto& provider : m_extProviders) {
       provider->initDeviceExtensions(this);
       for (uint32_t i = 0; enumAdapters(i) != nullptr; i++)
