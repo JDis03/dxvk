@@ -39,9 +39,11 @@ Este fork de **DXVK** (`https://github.com/JDis03/dxvk.git`) tiene como objetivo
 ### B. Recursos dinámicos en memoria cacheada (`src/util/config/config.cpp`) - [COMPLETADO]
 * **Implementado**: Integrado en el perfil automático `Config::getArmMaliConfig()` forzando `d3d11.cachedDynamicResources = a` y `d3d9.cachedWriteOnlyBuffers = True` para evitar retrasos de escritura no cacheada en memoria unificada LPDDR5.
 
-### C. Compilación Asíncrona de Pipelines (`src/dxvk/dxvk_pipemanager.cpp`) - [PENDIENTE]
-* **Ubicación**: `src/dxvk/dxvk_pipemanager.cpp` y `src/dxvk/dxvk_graphics.cpp`.
-* **Mejora**: Integrar compilación asíncrona no bloqueante (estilo `dxvk-async`): si un pipeline gráfico aún no está listo en el caché de Vulkan, emitir temporalmente un shader dummy o posponer la llamada de dibujo en vez de congelar el hilo principal de renderizado.
+### C. Compilación Asíncrona de Pipelines (`src/dxvk/dxvk_graphics.cpp`, `dxvk_context.cpp`) - [COMPLETADO]
+* **Implementado**:
+  * Opción `dxvk.enableAsync = true` añadida a las opciones de DXVK y activada por defecto en el perfil Mali.
+  * Rastreo de uso de render targets en `DxvkImageView::setRtBindingFrameId` para asegurar que la compilación asíncrona se activa únicamente durante bucles de dibujado activos en juego.
+  * En `DxvkGraphicsPipeline::getPipelineHandle`, cuando un pipeline no existe y async está habilitado, se encola la tarea en los workers con prioridad `High` y se retorna temporalmente sin bloquear el hilo principal de renderizado, eliminando el congelamiento por compilación en CPU emulada.
 
 ### D. Optimización de Render Passes para TBDR (LoadOp / StoreOp DONT_CARE) - [COMPLETADO PARCIALMENTE]
 * **Implementado**: En `dxvk_context.cpp` (`finalizeLoadStoreOps`), para arquitecturas tiler (`preferRenderPassOps`), cuando un adjunto (color, profundidad o stencil) tiene un resolve dentro del render pass, demotar `storeOp` a `VK_ATTACHMENT_STORE_OP_DONT_CARE` para evitar volcar gigabytes de datos multisample redundantes a la memoria principal.
