@@ -625,6 +625,11 @@ namespace dxvk {
     for (uint32_t i = 0; i < backBufferCount; i++)
       images.push_back(GetCommonTexture(m_backBuffers[i].ptr())->GetImage());
 
+    Logger::info(str::format("D3D11SwapChain: BufferCount: ", m_desc.BufferCount,
+      ", SwapEffect: ", uint32_t(m_desc.SwapEffect),
+      ", LatencyCap: ", m_frameLatencyCap,
+      " -> ActualFrameLatency: ", GetActualFrameLatency()));
+
     // Initialize images so that we can use them. Clearing
     // to black prevents garbled output for the first frame.
     m_parent->GetContext()->InjectCs(DxvkCsQueue::HighPriority, [
@@ -700,9 +705,16 @@ namespace dxvk {
       m_dxgiDevice->GetMaximumFrameLatency(&maxFrameLatency);
 
     if (m_frameLatencyCap)
-      maxFrameLatency = std::min(maxFrameLatency, m_frameLatencyCap);
+      return std::min(maxFrameLatency, m_frameLatencyCap);
 
-    maxFrameLatency = std::min(maxFrameLatency, m_desc.BufferCount);
+    bool sequential = m_desc.SwapEffect == DXGI_SWAP_EFFECT_SEQUENTIAL ||
+                      m_desc.SwapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+
+    if (sequential)
+      maxFrameLatency = std::min(maxFrameLatency, m_desc.BufferCount);
+    else
+      maxFrameLatency = std::min(maxFrameLatency, m_desc.BufferCount + 1);
+
     return maxFrameLatency;
   }
 

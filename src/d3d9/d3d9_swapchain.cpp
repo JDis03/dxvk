@@ -1148,7 +1148,7 @@ namespace dxvk {
     uint32_t maxFrameLatency = m_parent->GetFrameLatency();
 
     if (m_frameLatencyCap)
-      maxFrameLatency = std::min(maxFrameLatency, m_frameLatencyCap);
+      return std::min(maxFrameLatency, m_frameLatencyCap);
 
     maxFrameLatency = std::min(maxFrameLatency, m_presentParams.BackBufferCount + 1);
     return maxFrameLatency;
