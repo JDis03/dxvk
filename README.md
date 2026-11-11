@@ -1,6 +1,6 @@
 # DXVK (ARM Mali & ARM64X Edition)
 
-A Vulkan-based translation layer for Direct3D 8/9/10/11 optimized specifically for **ARM Mali GPUs** (TBDR architecture) and compiled as hybrid **COFF-ARM64X** binaries for Windows-on-ARM, Proton, and Wine on Android (DroidDeck, Termux, Box64, FEX-Emu).
+A Vulkan-based translation layer for Direct3D 8/9/10/11 optimized specifically for **ARM Mali GPUs** (TBDR architecture) and compiled as hybrid **COFF-ARM64X** binaries for Windows-on-ARM, Proton, and Wine on ARM64 platforms.
 
 ---
 
@@ -8,8 +8,8 @@ A Vulkan-based translation layer for Direct3D 8/9/10/11 optimized specifically f
 
 ### 1. Hybrid COFF-ARM64X Binaries
 Standard DXVK produces separate `x64` and `x32` DLLs. On Windows-on-ARM or Wine ARM64, running native ARM64 games and x64 emulated games previously required swapping DLL sets.
-- This fork compiles hybrid **COFF-ARM64X** DLLs using LLVM/Clang.
-- **A single set of DLLs** (`d3d11.dll`, `dxgi.dll`, `d3d9.dll`, `d3d8.dll`, `d3d10core.dll`) runs **both native ARM64 applications and emulated x64 / ARM64EC applications** without conflict or manual switching.
+- Compiles hybrid **COFF-ARM64X** DLLs using LLVM/Clang.
+- **A single set of DLLs** (`d3d11.dll`, `dxgi.dll`, `d3d9.dll`, `d3d8.dll`, `d3d10core.dll`) serves **both native ARM64 applications and emulated x64 / ARM64EC applications** without conflict or manual switching.
 
 ### 2. ARM Mali (TBDR) Render Pass Optimizations
 Tile-Based Deferred Rendering (TBDR) architectures (ARM Mali, Immortalis, Adreno) suffer significant memory bandwidth penalties when resolved render targets are written back to DRAM unnecessarily.
@@ -17,11 +17,11 @@ Tile-Based Deferred Rendering (TBDR) architectures (ARM Mali, Immortalis, Adreno
 - **Zero Bandwidth Waste:** Sets `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` on multisample render targets that have already been resolved, dramatically reducing thermal throttling and memory bus congestion.
 
 ### 3. Smooth Frame Pacing (Fixed Frame Latency Clamping)
-- In upstream DXVK, swapchain latency in D3D11 and D3D9 could artificially clamp `GetActualFrameLatency` down to `BufferCount`, causing frame queue starvation and jerky rendering on mobile display compositors (such as Gamescope / Wayland).
+- In upstream DXVK, swapchain latency in D3D11 and D3D9 could artificially clamp `GetActualFrameLatency` down to `BufferCount`, causing frame queue starvation and jerky rendering on display compositors (such as Gamescope / Wayland).
 - This fork respects the user's `dxgi.maxFrameLatency` setting without clamping to `BufferCount`, producing consistent frame delivery.
 
 ### 4. Memory Heap Query Throttling
-- Frequent calls to `vkGetPhysicalDeviceMemoryProperties2` inside DXGI created severe kernel context switch storms under Linux proot and Wine.
+- Frequent calls to `vkGetPhysicalDeviceMemoryProperties2` inside DXGI created severe kernel context switch storms under emulation/translation environments.
 - Added a 250 ms cache on device memory heap queries, freeing CPU time for game logic and draw submission.
 
 ### 5. Async Pipeline Compilation
@@ -29,20 +29,8 @@ Tile-Based Deferred Rendering (TBDR) architectures (ARM Mali, Immortalis, Adreno
 
 ---
 
-## 🎮 Tested In-Game Performance
+## 📦 How to Install
 
-- **Hardware:** Xiaomi 15T (MediaTek Dimensity 9300+, ARM Mali-G720 MC7)
-- **Environment:** DroidDeck / DroidDeck-Proton 11-12.1 / Android 15
-- **Verified Games:**
-  - **World of Warcraft Retail (build 70888):** Native ARM64 client running at a locked **55–60 FPS** at ~600 MB–1 GB RAM consumption.
-  - **World of Warcraft: Classic Forever:** Running smoothly at **59.9 FPS** with full touchscreen controller overlays.
-
----
-
-## 📦 How to Install (For Users)
-
-### Option 1: Automatic / DroidDeck
-If you are using DroidDeck on Android:
 1. Download the latest release from the [Releases](https://github.com/JDis03/dxvk/releases) page (`dxvk-mali-arm64x-v3.1.0.zip` or `.tar.gz`).
 2. Extract the DLLs from the `arm64x/` folder:
    - `d3d11.dll`
@@ -54,22 +42,13 @@ If you are using DroidDeck on Android:
    ```bash
    cp arm64x/*.dll <WINEPREFIX>/drive_c/windows/system32/
    ```
-4. (Optional) Also copy them into your Proton installation under `files/lib/wine/aarch64-windows/` to make them default for all new prefixes.
-
-### Option 2: Wine / Proton on Android (Manual)
-1. Open `winecfg` for your prefix.
-2. In the **Libraries** tab, ensure the following DLL overrides are set to **Native, Builtin**:
-   - `d3d11`
-   - `dxgi`
-   - `d3d9`
-   - `d3d10core`
-   - `d3d8`
+4. In `winecfg`, ensure `d3d11`, `dxgi`, `d3d9`, `d3d10core`, and `d3d8` are set to **Native, Builtin** under the **Libraries** tab.
 
 ---
 
 ## ⚙️ Recommended Configuration (`dxvk.conf`)
 
-For optimal performance on ARM Mali devices, create or edit `dxvk.conf` next to your game executable (or set via `DXVK_CONFIG` environment variable):
+For optimal performance on ARM Mali devices, create or edit `dxvk.conf` next to your executable (or set via `DXVK_CONFIG` environment variable):
 
 ```ini
 # Async shader compilation (reduces shader stutter)
@@ -93,7 +72,7 @@ dxgi.maxSharedMemory = 2048
 
 ---
 
-## 🛠️ Build Instructions (For Developers)
+## 🛠️ Build Instructions
 
 ### Requirements
 - Linux build host (x86_64 or aarch64)
