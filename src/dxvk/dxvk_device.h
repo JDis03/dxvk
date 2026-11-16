@@ -46,6 +46,7 @@ namespace dxvk {
     VkBool32 preferComputeMipGen        : 1;
     VkBool32 preferDescriptorByteOffsets: 1;
     VkBool32 preferCachedMemory         : 1;
+    VkBool32 preferTransferClears       : 1;
   };
   
   /**

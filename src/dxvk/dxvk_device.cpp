@@ -728,6 +728,10 @@ namespace dxvk {
     hints.preferRenderPassOps = tilerMode;
     hints.preferCachedMemory = tilerMode;
 
+    // On tilers, clearing whole storage-only color subresources via
+    // vkCmdClearColorImage avoids compute clear dispatches.
+    hints.preferTransferClears = tilerMode;
+
     // Compute-based mip generation has some potential for performance
     // regressions or driver issues. Just enable it on Nvidia and RADV
     // (GFX10+) for now, where it is proven to work.

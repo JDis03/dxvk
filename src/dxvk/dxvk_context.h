@@ -1487,6 +1487,12 @@ namespace dxvk {
             VkOffset3D            offset,
             VkExtent3D            extent,
             VkClearValue          value);
+
+    bool clearImageViewTransfer(
+      const Rc<DxvkImageView>&    imageView,
+            VkOffset3D            offset,
+            VkExtent3D            extent,
+            VkClearValue          value);
     
     void copyImageHw(
       const Rc<DxvkImage>&        dstImage,

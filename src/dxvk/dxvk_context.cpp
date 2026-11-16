@@ -438,8 +438,11 @@ namespace dxvk {
     
     if (viewUsage & (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT))
       this->clearImageViewFb(imageView, offset, extent, aspect, value);
-    else if (viewUsage & VK_IMAGE_USAGE_STORAGE_BIT)
-      this->clearImageViewCs(imageView, offset, extent, value);
+    else if (viewUsage & VK_IMAGE_USAGE_STORAGE_BIT) {
+      if (!m_device->perfHints().preferTransferClears
+       || !this->clearImageViewTransfer(imageView, offset, extent, value))
+        this->clearImageViewCs(imageView, offset, extent, value);
+    }
 
     if (imageView->isMultisampled()) {
       auto subresources = imageView->imageSubresources();
@@ -4347,6 +4350,53 @@ namespace dxvk {
   }
 
   
+  bool DxvkContext::clearImageViewTransfer(
+    const Rc<DxvkImageView>&    imageView,
+          VkOffset3D            offset,
+          VkExtent3D            extent,
+          VkClearValue          value) {
+    // Only whole subresources of a plain color image, viewed in its own
+    // format (or cleared to zero, the same bits in any format) and its own
+    // dimensionality, so the clear means the same as through the view;
+    // everything else keeps the compute path.
+    const Rc<DxvkImage>& image = imageView->image();
+    const auto& imageInfo = image->info();
+    const auto& viewInfo = imageView->info();
+
+    if (!(imageInfo.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+     || imageInfo.sampleCount != VK_SAMPLE_COUNT_1_BIT
+     || (viewInfo.format != imageInfo.format && (value.color.uint32[0] | value.color.uint32[1]
+                                                | value.color.uint32[2] | value.color.uint32[3]))
+     || image->formatInfo()->aspectMask != VK_IMAGE_ASPECT_COLOR_BIT
+     || image->formatInfo()->flags.any(DxvkFormatFlag::BlockCompressed, DxvkFormatFlag::MultiPlane)
+     || (imageInfo.type == VK_IMAGE_TYPE_3D && viewInfo.viewType != VK_IMAGE_VIEW_TYPE_3D)
+     || offset.x || offset.y || offset.z)
+      return false;
+
+    VkImageSubresourceRange subresources = imageView->imageSubresources();
+
+    if (subresources.levelCount != 1u
+     || !image->isFullSubresource(vk::pickSubresourceLayers(subresources, 0u), extent))
+      return false;
+
+    VkImageLayout layout = image->pickLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    DxvkResourceAccess access(*image, subresources, layout,
+      VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT, true);
+
+    DxvkCmdBuffer cmdBuffer = prepareOutOfOrderTransfer(DxvkCmdBuffer::InitBuffer, 1u, &access);
+
+    if (cmdBuffer == DxvkCmdBuffer::ExecBuffer)
+      endCurrentPass(true);
+
+    syncResources(cmdBuffer, 1u, &access);
+
+    m_cmd->cmdClearColorImage(cmdBuffer,
+      image->handle(), layout, &value.color, 1, &subresources);
+    return true;
+  }
+
+
   void DxvkContext::clearImageViewCs(
     const Rc<DxvkImageView>&    imageView,
           VkOffset3D            offset,
