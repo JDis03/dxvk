@@ -6,7 +6,7 @@ A fork of [DXVK](https://github.com/doitsujin/dxvk) (Direct3D 8/9/10/11 → Vulk
 **tile-based GPUs, in particular Arm Mali / Immortalis**, and built as hybrid **COFF-ARM64X** DLLs
 for Wine / Proton on ARM64 (Android included).
 
-Based on upstream DXVK 3.1. Upstream documentation (wiki, configuration reference) still applies:
+Based on upstream DXVK 3.1.1. Upstream documentation (wiki, configuration reference) still applies:
 <https://github.com/doitsujin/dxvk/wiki>.
 
 > **Scope.** This repository only contains DXVK. How to run Steam, Battle.net or specific games on
@@ -21,14 +21,15 @@ Based on upstream DXVK 3.1. Upstream documentation (wiki, configuration referenc
 |---|---|---|---|
 | 1 | **Mali detection** | `dxvk_adapter.cpp`, `dxvk_instance.cpp` | `DxvkAdapter::isArmMali()` matches the Arm proprietary driver, PanVK, Arm vendor ID `0x13b5`, or a device name containing "Mali". |
 | 2 | **Mali config profile** | `config.cpp` (`getArmMaliConfig`) | Applied automatically on Mali (or with `DXVK_MALI_PROFILE=1`). See the table below. |
-| 3 | **Tiler mode** | `dxvk_adapter.cpp`, `dxvk_device.cpp` | `isTiler()` is true for Mali, Adreno (Turnip / Qualcomm), Apple, PanVK, V3D, PowerVR and similar. It turns on `preferRenderPassOps` and `preferCachedMemory`. Override with `dxvk.tilerMode`. |
+| 3 | **Tiler mode** | `dxvk_adapter.cpp`, `dxvk_device.cpp` | `isTiler()` is true for Mali, Adreno (Turnip / Qualcomm), Apple, PanVK, V3D, PowerVR and similar. It turns on `preferRenderPassOps`, `preferCachedMemory` and `preferTransferClears`. Override with `dxvk.tilerMode`. |
 | 4 | **Resolve store-op demotion** | `dxvk_context.cpp` | On tilers, a multisampled attachment that is resolved inside the render pass gets `storeOp = DONT_CARE`, so the raw MSAA tile data is not written back to RAM. |
-| 5 | **Asynchronous pipeline compilation** | `dxvk_graphics.cpp`, `dxvk_context.cpp` | A draw whose pipeline is not compiled yet is queued to the compiler workers and skipped instead of stalling the render thread. Only used for render targets already drawn to in previous frames. `dxvk.enableAsync` (default `true`); disable with `DXVK_ASYNC=0`. |
-| 6 | **Frame-latency fix** | `d3d11_swapchain.cpp`, `d3d9_swapchain.cpp` | Upstream clamps the latency to `BufferCount`. Games using `DXGI_SWAP_EFFECT_DISCARD` report `BufferCount = 1`, which forced a latency of 1 and serialised CPU and GPU. The configured `maxFrameLatency` cap is now respected. |
-| 7 | **Memory-heap query cache** | `dxvk_adapter.cpp` | `getMemoryHeapInfo` caches `vkGetPhysicalDeviceMemoryProperties2` for 250 ms. Games that poll VRAM every frame no longer cost a driver call each time. |
-| 8 | **Driver quirks** | `dxvk_device_info.cpp` | `VK_EXT_multi_draw` is disabled on the Arm proprietary driver (as upstream already does for Qualcomm). |
-| 9 | **Vendor-ID masking** | `dxgi_adapter.cpp` | A GPU whose vendor ID is not NVIDIA / AMD / Intel is reported to the game as an *AMD Radeon RX 6700 XT*, so games do not reject a mobile GPU. Overridable with `dxgi.customVendorId` / `customDeviceId` / `customDeviceDesc`. |
-| 10 | **COFF-ARM64X build** | `build-win-arm64ec.txt` | One DLL set that works for both native ARM64 and ARM64EC/x64-emulated processes. |
+| 5 | **Transfer clears on tilers** | `dxvk_context.cpp` | Under `preferTransferClears`, whole-subresource clears of plain storage-only color images use `vkCmdClearColorImage` instead of a compute shader dispatch. |
+| 6 | **Asynchronous pipeline compilation** | `dxvk_graphics.cpp`, `dxvk_context.cpp` | A draw whose pipeline is not compiled yet is queued to the compiler workers and skipped instead of stalling the render thread. Only used for render targets already drawn to in previous frames. `dxvk.enableAsync` (default `true`); disable with `DXVK_ASYNC=0`. |
+| 7 | **Frame-latency fix** | `d3d11_swapchain.cpp`, `d3d9_swapchain.cpp` | Upstream clamps the latency to `BufferCount`. Games using `DXGI_SWAP_EFFECT_DISCARD` report `BufferCount = 1`, which forced a latency of 1 and serialised CPU and GPU. The configured `maxFrameLatency` cap is now respected. |
+| 8 | **Memory-heap query cache** | `dxvk_adapter.cpp` | `getMemoryHeapInfo` caches `vkGetPhysicalDeviceMemoryProperties2` for 250 ms. Games that poll VRAM every frame no longer cost a driver call each time. |
+| 9 | **Driver quirks** | `dxvk_device_info.cpp` | `VK_EXT_multi_draw` is disabled on the Arm proprietary driver (as upstream already does for Qualcomm). |
+| 10 | **Vendor-ID masking** | `dxgi_adapter.cpp` | A GPU whose vendor ID is not NVIDIA / AMD / Intel is reported to the game as an *AMD Radeon RX 6700 XT*, so games do not reject a mobile GPU. Overridable with `dxgi.customVendorId` / `customDeviceId` / `customDeviceDesc`. |
+| 11 | **COFF-ARM64X build** | `build-win-arm64ec.txt` | One DLL set that works for both native ARM64 and ARM64EC/x64-emulated processes. |
 
 ### The Mali profile
 
@@ -69,14 +70,14 @@ effective values, so you can confirm it in the `*_d3d11.log` file.
 - **Desktop GPUs** (NVIDIA, AMD, Intel): the Mali profile and tiler mode stay off. `dxvk.enableAsync`
   is `true` by default for every GPU in this fork; set `dxvk.enableAsync = False` (or `DXVK_ASYNC=0`)
   to get upstream behaviour. The frame-latency fix applies everywhere.
-- **Adreno / other tilers**: tiler mode (items 3 and 4) is enabled automatically, but the full Mali
+- **Adreno / other tilers**: tiler mode (items 3, 4 and 5) is enabled automatically, but the full Mali
   profile is **not**. You can opt in with `DXVK_MALI_PROFILE=1` if you want to try it.
 
 ---
 
 ## Installing
 
-Download `dxvk-mali-arm64x-v3.1.0.zip` or `.tar.gz` from the
+Download `dxvk-mali-arm64x-v3.1.1.zip` or `.tar.gz` from the
 [Releases](https://github.com/JDis03/dxvk/releases) page. Inside there is an `arm64x/` folder with
 `d3d8.dll`, `d3d9.dll`, `d3d10core.dll`, `d3d11.dll` and `dxgi.dll`.
 

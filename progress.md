@@ -1,3 +1,8 @@
+## 2026-11-15 21:35 — dxvk
+**Summary**: Verified `preferTransferClears` (`clearImageViewTransfer` via `vkCmdClearColorImage` on whole storage-only color subresources gated to `tilerMode`) on ARM Mali-G720 MC7 vs baseline `5b4d9b53` and MaliBridge v0.5.6 runtime flags; cleaned temporary diagnostic logs and committed `preferTransferClears` locally (`c54299bb`).
+**Verified**: Controlled A/B testing on Mali-G720 MC7 (1280x720, `VKBRIDGE_MODE=performance`) showed `5b4d9b53` at 26.7 FPS (`driver_ms=34.05 ms`), `clearImageViewTransfer` at 27.0-27.1 FPS (`driver_ms=33.32 ms`, eliminating whole-subresource compute clear dispatches), and `VKBRIDGE_HOT_CORES=1` + `VKBRIDGE_NO_FORCED_ROBUSTNESS=1` + `VKBRIDGE_PACER=0` at 27.3-27.8 FPS (`driver_ms=32.37 ms`), with remaining bottleneck identified as hardware Mali-G720 GPU saturation (703 Mcy/s, 45% compute / 43% fragment, 162 MB/f read + 117 MB/f write with AFBC disabled on `STORAGE_BIT` `R16G16B16A16_SFLOAT` RTs). Verified clean compilation for both `build.arm64ec` and `build.w64` (`ninja`).
+**Completed**: 1318, 1320
+---
 ## 2026-11-11 07:35 — dxvk
 **Summary**: Contexto guardado: Wow.exe x64 70862 del PC copiado al teléfono (md5 f9313e2a verificado), ntdll.dll de Proton y prefijo restaurados a originales (md5 82967168). Pendiente probar el juego y, si falla por versión, conseguir x64 70888.
 **Verified**: Se verificaron por adb y md5: Wow.exe del teléfono idéntico al del PC, y ntdll.dll de Proton y del prefijo idénticos al original. El juego no se lanzó tras estos cambios, así que no está verificado que arranque.
