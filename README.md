@@ -161,7 +161,8 @@ Vulkan translation layer for Mali. Desktop GPUs and upstream conformance have no
 for this fork, so treat it as experimental outside Mali.
 
 Design notes and the optimisation roadmap are in [`MALI_TBDR_ROADMAP.md`](MALI_TBDR_ROADMAP.md)
-(Spanish).
+(Spanish). See [`CONTRIBUTING.md`](CONTRIBUTING.md) for PR guidelines and how commits are kept
+ready to upstream to `doitsujin/dxvk`.
 
 ## License
 

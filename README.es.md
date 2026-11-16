@@ -162,6 +162,8 @@ una capa de traducción Vulkan para Mali. No se han vuelto a probar GPU de escri
 conformidad con upstream en este fork, así que considéralo experimental fuera de Mali.
 
 Las notas de diseño y la hoja de ruta están en [`MALI_TBDR_ROADMAP.md`](MALI_TBDR_ROADMAP.md).
+Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) para enviar PRs y ver qué parches están listos para
+subir a upstream (`doitsujin/dxvk`).
 
 ## Licencia
 
